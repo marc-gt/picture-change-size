@@ -1,0 +1,56 @@
+#!/usr/bin/env python3
+from PIL import Image
+import os
+
+def redimensionner_images_dossier(dossier_entree, dossier_sortie, nouvelle_taille=(2000, 2000)):
+    try:
+        # Obtenir le chemin absolu du dossier du script
+        dossier_script = os.path.dirname(os.path.abspath(__file__))
+
+        # Vérifier si le dossier d'entrée existe, sinon le créer au même emplacement que le script
+        dossier_entree_absolu = os.path.join(dossier_script, dossier_entree)
+        if not os.path.exists(dossier_entree_absolu):
+            os.makedirs(dossier_entree_absolu)
+            print(f"Le dossier d'entrée a été créé à l'emplacement : {dossier_entree_absolu}")
+
+        # Vérifier si le dossier de sortie existe, sinon le créer
+        dossier_sortie_absolu = os.path.join(dossier_script, dossier_sortie)
+        if not os.path.exists(dossier_sortie_absolu):
+            os.makedirs(dossier_sortie_absolu)
+            print(f"Le dossier de sortie a été créé à l'emplacement : {dossier_sortie_absolu}")
+
+        # Parcourir toutes les images dans le dossier d'entrée
+        for nom_fichier in os.listdir(dossier_entree_absolu):
+            chemin_entree = os.path.join(dossier_entree_absolu, nom_fichier)
+
+            # Vérifier si l'élément est un fichier
+            if os.path.isfile(chemin_entree):
+                # Construire le chemin de sortie en conservant le même nom de fichier
+                chemin_sortie = os.path.join(dossier_sortie_absolu, nom_fichier)
+
+                # Vérifier si le fichier de sortie existe déjà
+                if not os.path.exists(chemin_sortie):
+                    # Ouvrir l'image
+                    image = Image.open(chemin_entree)
+
+                    # Redimensionner l'image
+                    image_redimensionnee = image.resize(nouvelle_taille)
+
+                    # Sauvegarder l'image redimensionnée
+                    image_redimensionnee.save(chemin_sortie)
+
+                    print(f"L'image {nom_fichier} a été redimensionnée avec succès.")
+                else:
+                    print(f"L'image {nom_fichier} existe déjà dans le dossier de sortie. Ignorée.")
+
+        print("Toutes les images ont été traitées avec succès.")
+    except Exception as e:
+        print(f"Une erreur s'est produite : {e}")
+
+if __name__ == "__main__":
+    # Spécifier les dossiers d'entrée et de sortie
+    dossier_entree = input("Entrez le nom du dossier d'entrée : ")
+    dossier_sortie = input("Entrez le nom du dossier de sortie : ")
+
+    # Appeler la fonction pour redimensionner les images dans le dossier
+    redimensionner_images_dossier(dossier_entree, dossier_sortie)
