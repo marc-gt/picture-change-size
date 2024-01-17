@@ -1,0 +1,126 @@
+#!/usr/bin/env python3
+from PIL import Image
+import os
+import tkinter as tk
+from tkinter import filedialog, StringVar, ttk
+
+def redimensionner_images_dossier(dossier_entree, dossier_sortie, nouvelle_taille=(2000, 2000), checks=None):
+    try:
+        # Récupérer la liste des fichiers dans le dossier d'entrée
+        fichiers = [fichier for fichier in os.listdir(dossier_entree) if os.path.isfile(os.path.join(dossier_entree, fichier))]
+
+        # Vérifier si le dossier de sortie existe, sinon le créer
+        if not os.path.exists(dossier_sortie):
+            os.makedirs(dossier_sortie)
+            print(f"Le dossier de sortie a été créé à l'emplacement : {dossier_sortie}")
+
+        # Parcourir toutes les images dans le dossier d'entrée
+        for i, nom_fichier in enumerate(fichiers, start=1):
+            chemin_entree = os.path.join(dossier_entree, nom_fichier)
+            chemin_sortie = os.path.join(dossier_sortie, nom_fichier)
+
+            # Vérifier si le fichier est une image (extension .jpg, .png, etc.)
+            if not nom_fichier.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.bmp')):
+                print(f"Le fichier {nom_fichier} n'est pas une image. Ignoré.")
+                continue
+
+            # Vérifier si le fichier de sortie existe déjà
+            if not os.path.exists(chemin_sortie):
+                # Ouvrir l'image
+                image = Image.open(chemin_entree)
+
+                # Redimensionner l'image
+                image_redimensionnee = image.resize(nouvelle_taille)
+
+                # Sauvegarder l'image redimensionnée
+                image_redimensionnee.save(chemin_sortie)
+
+                print(f"L'image {nom_fichier} a été redimensionnée avec succès.")
+
+                # Mettre à jour le label avec un check vert
+                if checks:
+                    checks[i - 1].config(text="✔", foreground="green")
+            else:
+                print(f"L'image {nom_fichier} existe déjà dans le dossier de sortie. Ignorée.")
+
+                # Mettre à jour le label avec un check rouge
+                if checks:
+                    checks[i - 1].config(text="✘", foreground="red")
+
+        print("Toutes les images ont été traitées avec succès.")
+    except Exception as e:
+        print(f"Une erreur s'est produite : {e}")
+
+
+def choisir_dossier(var_dossier):
+    dossier = filedialog.askdirectory()
+    var_dossier.set(dossier)
+
+def reinitialiser_checks(checks):
+    # Réinitialiser les checks à leur état initial (texte vide et couleur par défaut)
+    for check in checks:
+        check.config(text="", foreground="black")
+
+def demarrer_interface():
+    global root, bouton_demarrer, bouton_reinitialiser, checks  # Déclarer les variables comme globales
+    root = tk.Tk()
+    root.title("Redimensionner des Images")
+
+    # Variables StringVar pour stocker les chemins des dossiers
+    var_dossier_entree = StringVar()
+    var_dossier_sortie = StringVar()
+
+    # Frame pour les widgets
+    frame = tk.Frame(root, padx=10, pady=10)
+    frame.pack()
+
+    # Widget Label pour afficher les chemins des dossiers
+    label_entree = tk.Label(frame, text="Dossier d'Entrée:")
+    label_entree.grid(row=0, column=0, padx=5, pady=5, sticky="w")
+
+    label_sortie = tk.Label(frame, text="Dossier de Sortie:")
+    label_sortie.grid(row=1, column=0, padx=5, pady=5, sticky="w")
+
+    # Boutons pour choisir les dossiers
+    bouton_choisir_entree = tk.Button(frame, text="Choisir Dossier", command=lambda: choisir_dossier(var_dossier_entree))
+    bouton_choisir_entree.grid(row=0, column=2, padx=5, pady=5)
+
+    bouton_choisir_sortie = tk.Button(frame, text="Choisir Dossier", command=lambda: choisir_dossier(var_dossier_sortie))
+    bouton_choisir_sortie.grid(row=1, column=2, padx=5, pady=5)
+
+    # Widget Entry pour afficher les chemins des dossiers
+    entry_entree = tk.Entry(frame, textvariable=var_dossier_entree, state="readonly", width=40)
+    entry_entree.grid(row=0, column=1, padx=5, pady=5)
+
+    entry_sortie = tk.Entry(frame, textvariable=var_dossier_sortie, state="readonly", width=40)
+    entry_sortie.grid(row=1, column=1, padx=5, pady=5)
+
+    # Bouton pour démarrer le redimensionnement
+    bouton_demarrer = tk.Button(frame, text="Démarrer", command=lambda: demarrer_redimensionnement(var_dossier_entree.get(), var_dossier_sortie.get()))
+    bouton_demarrer.grid(row=2, column=0, columnspan=3, pady=10)
+
+    # Bouton pour réinitialiser les checks
+    bouton_reinitialiser = tk.Button(frame, text="Réinitialiser", command=lambda: reinitialiser_checks(checks))
+    bouton_reinitialiser.grid(row=2, column=3, padx=5, pady=10)
+
+    # Liste de labels pour afficher les checks
+    checks = [tk.Label(frame, text="", font=("Arial", 12)) for _ in range(10)]  # Par exemple, 10 fichiers
+    for i, check in enumerate(checks, start=1):
+        check.grid(row=(i-1)//3 + 3, column=(i-1)%3, padx=5, pady=2)
+
+    root.mainloop()
+
+def demarrer_redimensionnement(dossier_entree, dossier_sortie):
+    global bouton_demarrer  # Déclarer la variable bouton_demarrer comme globale
+
+    # Désactiver le bouton "Démarrer" pendant le traitement
+    bouton_demarrer['state'] = tk.DISABLED
+
+    # Lancer le redimensionnement avec les checks
+    redimensionner_images_dossier(dossier_entree, dossier_sortie, checks=checks)
+
+    # Réactiver le bouton "Démarrer" après le traitement
+    bouton_demarrer['state'] = tk.NORMAL
+
+if __name__ == "__main__":
+    demarrer_interface()
